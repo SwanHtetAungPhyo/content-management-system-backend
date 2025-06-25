@@ -1,0 +1,40 @@
+name: Security and Quality Checks
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+  schedule:
+    - cron: '0 0 * * 0'
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [authentication, e-commerce, learning-management-system]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if service changed
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            service:
+              - '${{ matrix.service }}/**'
+
+      - name: Run Gosec Security Scanner
+        if: steps.changes.outputs.service == 'true' || github.event_name == 'schedule'
+        uses: securego/gosec@master
+        with:
+          args: './${{ matrix.service }}/...'
+
+      - name: Run Trivy vulnerability scanner
+        if: steps.changes.outputs.service == 'true' || github.event_name == 'schedule'
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './${{ matrix.service }}'
