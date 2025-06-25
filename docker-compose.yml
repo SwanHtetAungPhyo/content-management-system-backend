@@ -1,0 +1,93 @@
+services:
+  gateway:
+    image: swanhtetaungphyo1/apigateway:latest
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    volumes:
+      - "${PWD}/config.json:/root/config.json:ro"
+    depends_on:
+      - consul
+      - redis
+      - user-service
+    restart: unless-stopped
+    networks:
+      - gateway-network
+  consul:
+    image: hashicorp/consul
+    container_name: consul
+    ports:
+      - "8500:8500"
+    command: consul agent -dev -bind=0.0.0.0 -client=0.0.0.0 -ui
+    networks:
+      - gateway-network
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8001:8001"
+    environment:
+      - CONSUL_ADDR=consul:8500
+      - PORT=8001
+      - SERVICE_ADDRESS=user-service
+    depends_on:
+      - consul
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  authentication:
+    build:
+      context: ./authentication
+      dockerfile: Dockerfile
+    environment:
+      - PORT=8002
+      - DATABASE=
+    depends_on:
+      - consul
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  e-commerce:
+    build:
+      context: ./e-commerce
+      dockerfile: Dockerfile
+    environment:
+      - PORT=8003
+      - DATABASE=
+    depends_on:
+      - consul
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+  learning-management:
+    build:
+      context: ./learning-management-system
+      dockerfile: Dockerfile
+    environment:
+      - PORT=8004
+      - DATABASE=
+    depends_on:
+      - consul
+    networks:
+      - gateway-network
+    restart: unless-stopped
+
+
+networks:
+  gateway-network:
+    driver: bridge

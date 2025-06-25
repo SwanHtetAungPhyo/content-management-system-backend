@@ -1,0 +1,33 @@
+{
+  "port": 8080,
+  "consul_addr": "consul:8500",
+  "redis_addr": "redis:6379",
+  "auth_type": "NORMAL",
+  "jwt_secret": "Z+1mxVqJ9b/lidlCkiLKp10WnTcRAxL2iHJ2aCtFO38=",
+  "routes": [
+    {
+      "path": "/cms/lms*",
+      "service": "learning-management-service",
+      "rate_limit": 100,
+      "cache_ttl": 60,
+      "protected": false,
+      "strip_path": "/cms"
+    },
+    {
+      "path": "/cms/ecs",
+      "service": "e-commerce-service",
+      "rate_limit": 100,
+      "cache_ttl": 60,
+      "protected": false,
+      "strip_path": "/cms"
+    },
+    {
+      "path": "/cms/auth",
+      "service": "authentication-service",
+      "rate_limit": 100,
+      "cache_ttl": 60,
+      "protected": false,
+      "strip_path": "/cms"
+    }
+  ]
+}
