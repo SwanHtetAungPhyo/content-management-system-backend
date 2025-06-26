@@ -6,19 +6,22 @@ on:
   pull_request:
     branches: [ main, dev ]
   schedule:
-    - cron: '0 0 * * 0'
+    - cron: '0 0 * * 0'  # Fixed cron syntax
 
 jobs:
   security-scan:
     runs-on: ubuntu-latest
-    env:
-      GO111MODULE: on
     strategy:
       matrix:
         service: [authentication, e-commerce, learning-management-system]
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'  # Specify your Go version
 
       - name: Check if service changed
         uses: dorny/paths-filter@v2
@@ -29,7 +32,7 @@ jobs:
               - '${{ matrix.service }}/**'
 
       - name: Cache Go Modules
-        if: steps.changes.outputs.service == 'true'
+        if: steps.changes.outputs.service == 'true' || github.event_name == 'schedule'
         uses: actions/cache@v3
         with:
           path: |
@@ -39,10 +42,27 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-${{ matrix.service }}-
 
-      - name: Download Dependencies
-        if: steps.changes.outputs.service == 'true'
+      - name: Initialize Go Module (if needed)
+        if: steps.changes.outputs.service == 'true' || github.event_name == 'schedule'
         working-directory: ./${{ matrix.service }}
-        run: go mod download
+        run: |
+          if [ ! -f go.mod ]; then
+            go mod init github.com/content-management-system/backend/${{ matrix.service }}
+          fi
+
+      - name: Download Dependencies
+        if: steps.changes.outputs.service == 'true' || github.event_name == 'schedule'
+        working-directory: ./${{ matrix.service }}
+        run: |
+          go mod tidy
+          go mod download
+          go mod verify
+
+      - name: Build to verify dependencies
+        if: steps.changes.outputs.service == 'true' || github.event_name == 'schedule'
+        working-directory: ./${{ matrix.service }}
+        run: |
+          go build -v ./...
 
       - name: Run Gosec Security Scanner
         if: steps.changes.outputs.service == 'true' || github.event_name == 'schedule'
