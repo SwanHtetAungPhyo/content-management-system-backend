@@ -11,6 +11,8 @@ on:
 jobs:
   security-scan:
     runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
     strategy:
       matrix:
         service: [authentication, e-commerce, learning-management-system]
