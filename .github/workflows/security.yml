@@ -28,6 +28,22 @@ jobs:
             service:
               - '${{ matrix.service }}/**'
 
+      - name: Cache Go Modules
+        if: steps.changes.outputs.service == 'true'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.service }}-${{ hashFiles(format('{0}/go.sum', matrix.service)) }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ matrix.service }}-
+
+      - name: Download Dependencies
+        if: steps.changes.outputs.service == 'true'
+        working-directory: ./${{ matrix.service }}
+        run: go mod download
+
       - name: Run Gosec Security Scanner
         if: steps.changes.outputs.service == 'true' || github.event_name == 'schedule'
         uses: securego/gosec@master
