@@ -13,7 +13,7 @@ func ConsulClient() *api.Client {
 	if consulAddr == "" {
 		consulAddr = "consul:8500"
 	}
-
+	log.Printf("Connecting to Consul at %s", consulAddr)
 	consulConfig := api.DefaultConfig()
 	consulConfig.Address = consulAddr
 	client, err := api.NewClient(consulConfig)
