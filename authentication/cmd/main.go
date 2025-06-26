@@ -19,7 +19,7 @@ func main() {
 	app := fiber.New(fiber.Config{
 		AppName: "Go Fiber App",
 	})
-
+	log.Println("Hello World")
 	app.Use(logger.New())
 	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
