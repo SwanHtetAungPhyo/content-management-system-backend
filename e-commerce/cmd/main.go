@@ -1,6 +1,7 @@
 package main
 
 import (
+	consulRegistry "github.com/content-management-system/backend/ecommerence/pkg/utils"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"log"
 	"os"
@@ -8,8 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
-
-	consulRegistry "github.com/content-management-system/backend/ecommerence/pkg/consul"
 )
 
 func init() {
