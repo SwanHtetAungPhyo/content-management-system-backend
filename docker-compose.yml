@@ -4,17 +4,22 @@ services:
     container_name: api-gateway
     ports:
       - "8080:8080"
+    environment:
+      - CONSUL_ADDR=consul:8500
     volumes:
       - "${PWD}/config.json:/root/config.json:ro"
     depends_on:
       - consul
       - redis
-      - user-service
+      - authentication
+      - e-commerce
+      - learning-management
     restart: unless-stopped
     networks:
       - gateway-network
+
   consul:
-    image: hashicorp/consul
+    image: hashicorp/consul:latest
     container_name: consul
     ports:
       - "8500:8500"
@@ -22,6 +27,12 @@ services:
     networks:
       - gateway-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "consul", "members"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -30,63 +41,95 @@ services:
     networks:
       - gateway-network
     restart: unless-stopped
-
-  user-service:
-    build:
-      context: ./user-service
-      dockerfile: Dockerfile
-    container_name: user-service
-    ports:
-      - "8001:8001"
-    environment:
-      - CONSUL_ADDR=consul:8500
-      - PORT=8001
-      - SERVICE_ADDRESS=user-service
-    depends_on:
-      - consul
-    networks:
-      - gateway-network
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   authentication:
     build:
       context: ./authentication
       dockerfile: Dockerfile
+    container_name: authentication-service
+    ports:
+      - "8002:8002"
     environment:
+      - CONSUL_ADDR=consul:8500
       - PORT=8002
-      - DATABASE=
+      - SERVICE_ID=authentication-service-1
+      - SERVICE_NAME=authentication
+      - SERVICE_ADDRESS=authentication-service
+      - DATABASE=${DATABASE}
+    env_file:
+      - .env
     depends_on:
-      - consul
+      consul:
+        condition: service_healthy
     networks:
       - gateway-network
     restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
 
   e-commerce:
     build:
       context: ./e-commerce
       dockerfile: Dockerfile
+    container_name: e-commerce-service
+    ports:
+      - "8003:8003"
     environment:
+      - CONSUL_ADDR=consul:8500
       - PORT=8003
-      - DATABASE=
+      - SERVICE_ID=e-commerce-service-1
+      - SERVICE_NAME=e-commerce
+      - SERVICE_ADDRESS=e-commerce-service
+      - DATABASE=${DATABASE}
+    env_file:
+      - .env
     depends_on:
-      - consul
+      consul:
+        condition: service_healthy
     networks:
       - gateway-network
     restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
 
   learning-management:
     build:
       context: ./learning-management-system
       dockerfile: Dockerfile
+    container_name: learning-management-service
+    ports:
+      - "8004:8004"
     environment:
+      - CONSUL_ADDR=consul:8500
       - PORT=8004
-      - DATABASE=
+      - SERVICE_ID=learning-management-service-1
+      - SERVICE_NAME=learning-management
+      - SERVICE_ADDRESS=learning-management-service
+      - DATABASE=${DATABASE}
+    env_file:
+      - .env
     depends_on:
-      - consul
+      consul:
+        condition: service_healthy
     networks:
       - gateway-network
     restart: unless-stopped
-
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
 
 networks:
   gateway-network:
