@@ -1,4 +1,5 @@
-module github.com/content-management-system/backend/ecommerence
+module github.com/content-management-system/backend/e-commerce
+
 
 go 1.24.4
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	consulRegistry "github.com/content-management-system/backend/ecommerence/pkg/utils"
+	consulRegistry "github.com/content-management-system/backend/e-commerce/pkg/utils"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"log"
 	"os"
